@@ -83,6 +83,66 @@ app.get("/books/:id", async(req,res)=>{
     }
 })
 
+app.post("/books",async(req,res)=>{
+    const reqTitle = req.body.title;
+    const reqAuthor = req.body.author;
+    const reqYear = req.body.year_published !==undefined ? req.body.year_published : 0;
+    const reqAvailable = req.body.available !==undefined ? req.body.available : true;
+
+    try{
+        if((!reqTitle || reqTitle.trim()==='') || (!reqAuthor || reqAuthor.trim()==='')){
+            return res.status(400).json({error: "Title and Author are required fields"});
+        }
+        const result = await pool.query(`INSERT INTO books (title, author, year_published, available) VALUES ($1,$2,$3,$4) RETURNING *`, [reqTitle,reqAuthor,reqYear,reqAvailable]);
+        return res.status(201).json(result.rows[0]);
+    }catch(error){
+        console.error('Error fetching data: ', error.message);
+        res.status(500).json({ error: "Internal server error." });
+    }
+})
+app.put("/books/:id", async (req, res) => {
+    const reqId = req.params.id;
+    const reqTitle = req.body.title;
+    const reqAuthor = req.body.author;
+    const reqYear = req.body.year_published;
+    const reqAvailable = req.body.available;
+
+    try {
+        const result = await pool.query(`SELECT * FROM books WHERE id = $1`, [reqId]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: `Book with id: ${reqId} is not found!` });
+        }
+        
+        const currentBook = result.rows[0]; 
+        
+        const finalTitle = reqTitle !== undefined ? reqTitle : currentBook.title;
+        const finalAuthor = reqAuthor !== undefined ? reqAuthor : currentBook.author;
+        const finalYear = reqYear !== undefined ? reqYear : currentBook.year_published;
+        const finalAvailable = reqAvailable !== undefined ? reqAvailable : currentBook.available;
+
+        if ((typeof finalTitle === 'string' && finalTitle.trim() === '') || (typeof finalAuthor === 'string' && finalAuthor.trim() === '')) {
+            return res.status(400).json({ error: "Title or Author cannot be empty!" });
+        }
+        
+        const updateResult = await pool.query(`
+            UPDATE books SET 
+                title = $1, 
+                author = $2, 
+                year_published = $3, 
+                available = $4 
+            WHERE id = $5
+            RETURNING *`,
+            [finalTitle, finalAuthor, finalYear, finalAvailable, reqId]
+        );
+        
+        res.status(200).json(updateResult.rows[0]);
+    } catch (error) {
+        console.error('Error updating data: ', error.message);
+        res.status(500).json({ error: "Internal server error." });
+    }
+});
+
 //----------------
 //  DELAY & START
 //----------------
