@@ -70,7 +70,7 @@ app.get("/books", async (req, res) => {
 });
 
 app.get("/books/:id", async(req,res)=>{
-    const reqId = req.params.id;
+    const reqId = Number(req.params.id);
     try{
         const result = await pool.query("SELECT * FROM books WHERE id = $1", [reqId]);
         if(result.rows.length===0){
@@ -138,6 +138,20 @@ app.put("/books/:id", async (req, res) => {
         
         res.status(200).json(updateResult.rows[0]);
     } catch (error) {
+        console.error('Error updating data: ', error.message);
+        res.status(500).json({ error: "Internal server error." });
+    }
+});
+app.delete("/books/:id", async (req,res)=>{
+    const reqId = Number(req.params.id);
+    try{
+        const result = await pool.query(`DELETE FROM books WHERE id = $1`, [reqId]);
+        if(result.rowCount===0){
+            return res.status(404).json({error: `Book with id: ${reqId} does not exist!`});
+        }
+        return res.status(204).send();
+        
+    }catch (error) {
         console.error('Error updating data: ', error.message);
         res.status(500).json({ error: "Internal server error." });
     }
