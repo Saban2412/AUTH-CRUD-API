@@ -52,7 +52,38 @@ async function initDatabase() {
         throw err; 
     }
 }
+//----------------
+//  GATEKEEPER
+//----------------
+app.use(async (req, res, next) => {
+    const reqIp = req.ip;
+    const reqRoute = req.originalUrl;
+    try {
+        await pool.query(
+            `INSERT INTO api_logs (ip_address, endpoint) VALUES ($1, $2)`,
+            [reqIp, reqRoute]
+        );
 
+        const result = await pool.query(
+            `SELECT COUNT(*) AS total 
+             FROM api_logs 
+             WHERE ip_address = $1 AND timestamp >= NOW() - INTERVAL '10 seconds'`,
+            [reqIp]
+        );
+
+        const totalRequests = parseInt(result.rows[0].total, 10);
+
+        if (totalRequests > 5) { 
+            return res.status(429).json({ error: "Hold on bot, know your limits!!!" });
+        }
+
+        next();
+
+    } catch (error) {
+        console.error('Error in rate limiter middleware: ', error.message);
+        next(); 
+    }
+});
 //----------------
 //    CRUD
 //----------------
