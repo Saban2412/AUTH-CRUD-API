@@ -4,6 +4,10 @@ const swaggerUi = require('swagger-ui-express');
 const fs = require('fs'); 
 const path = require('path');
 
+const supabase = require('./supabaseClient.js');
+
+console.log('Supabase client initializes:', process.env.SUPABASE_URL ? 'URL fetched' : '⚠️ URL missing!');
+
 const swaggerPath = path.join(__dirname, 'swagger.json');
 const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'));
 
@@ -49,7 +53,7 @@ async function initDatabase() {
         console.log('Postgres tables initialized successfully!');
 
         //SEEDING DATA
-        const result = await pool.query("SELECT * FROM book");
+        const result = await pool.query("SELECT * FROM books");
         if(result.rows.length===0){
             console.log('Database empty, seeding data...');
 
@@ -67,11 +71,11 @@ async function initDatabase() {
             const b3_year = 1937;
 
             const result = await pool.query(`
-        INSERT INTO books (title, author, year_published) 
+        INSERT INTO books (title, author, year_published,available) 
         VALUES 
-            ($1, $2, $3),  
+            ($1, $2, $3,true),  
             ($4, $5, $6, $7),  
-            ($8, $9, $10, $11)  
+            ($8, $9, $10,true)  
         RETURNING *`, 
         [
             b1_title, b1_author, b1_year,

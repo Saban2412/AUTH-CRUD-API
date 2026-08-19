@@ -114,7 +114,7 @@
         }
       },
       "put": {
-        "summary": "Ažurira podatke o postojećoj knjizi",
+        "summary": "Ažurira podatke o postojećoj knjizi (Potpuna izmjena)",
         "parameters": [
           {
             "name": "id",
@@ -135,7 +135,7 @@
                 "properties": {
                   "title": {
                     "type": "string",
-                    "example": "Proklata avlija"
+                    "example": "Prokleta avlija"
                   },
                   "author": {
                     "type": "string",
@@ -156,10 +156,81 @@
         },
         "responses": {
           "200": {
-            "description": "Podaci o knjizi uspešno izmenjeni u bazi."
+            "description": "Podaci o knjizi uspešno izmenjeni u bazi.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
           },
           "404": {
             "description": "Knjiga sa tim ID-jem nije pronađena."
+          }
+        }
+      },
+      "patch": {
+        "summary": "Djelomična izmjena knjige",
+        "description": "Omogućuje izmjenu jednog ili više polja knjige. Sva polja koja se izostave u request body-ju ostaju netaknuta u bazi podataka.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Jedinstveni ID knjige koju krpamo (ažuriramo)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Harry Potter and the Deathly Hallows"
+                  },
+                  "author": {
+                    "type": "string",
+                    "example": "J.K. Rowling"
+                  },
+                  "year_published": {
+                    "type": "integer",
+                    "example": 2007
+                  },
+                  "available": {
+                    "type": "boolean",
+                    "example": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Knjiga je uspješno izmijenjena.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Loš zahtjev (poslan je prazan string za polje title ili author)."
+          },
+          "404": {
+            "description": "Knjiga s tim ID-jem nije pronađena."
+          },
+          "500": {
+            "description": "Internal server error."
           }
         }
       },
@@ -182,6 +253,41 @@
           },
           "404": {
             "description": "Knjiga sa tim ID-jem ne postoji."
+          }
+        }
+      }
+    },
+    "/books/{id}/toggle-availability": {
+      "patch": {
+        "summary": "Preokreni dostupnost knjige",
+        "description": "Automatski postavlja polje 'available' na suprotnu vrijednost (iz true u false i obrnuto) direktno u bazi podataka. Ne zahtijeva slanje request body-ja.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Jedinstveni ID knjige kojoj se mijenja status dostupnosti"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status dostupnosti je uspješno promijenjen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Knjiga s tim ID-jem nije pronađena."
+          },
+          "500": {
+            "description": "Internal server error."
           }
         }
       }
