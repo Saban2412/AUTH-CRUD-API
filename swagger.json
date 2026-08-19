@@ -3,101 +3,62 @@
   "info": {
     "title": "Library API",
     "version": "1.0.0",
-    "description": "Complete CRUD for managing books"
+    "description": "Kompletan CRUD API za upravljanje knjigama u biblioteci, povezan sa Postgres bazom podataka."
   },
   "servers": [
     {
-      "url": "http://localhost:3000"
+      "url": "http://localhost:3000",
+      "description": "Lokalni Docker server"
     }
   ],
   "paths": {
     "/books": {
       "get": {
-        "summary": "Returns all books",
+        "summary": "Vraća sve knjige iz biblioteke",
         "responses": {
           "200": {
-            "description": "Uspešno osvežen spisak zadataka."
-          }
-        }
-      },
-      "post": {
-        "summary": "Kreira novi zadatak",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["title"],
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "example": "Buy milk"
+            "description": "Uspešno osvežen spisak svih knjiga.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
                   }
                 }
               }
             }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Zadatak uspešno kreiran."
           },
-          "400": {
-            "description": "Greška u validaciji (fali naslov ili već postoji)."
-          }
-        }
-      }
-    },
-    "/tasks/{id}": {
-      "get": {
-        "summary": "Vraća specifičan zadatak na osnovu ID-ja",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Jedinstveni ID zadatka"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Zadatak uspešno pronađen."
-          },
-          "404": {
-            "description": "Zadatak sa tim ID-jem nije pronađen."
+          "500": {
+            "description": "Greška na serveru pri komunikaciji sa bazom."
           }
         }
       },
-      "put": {
-        "summary": "Ažurira postojeći zadatak (naslov i/ili status završenosti)",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Jedinstveni ID zadatka koji se menja"
-          }
-        ],
+      "post": {
+        "summary": "Dodaje novu knjigu u biblioteku",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": ["title", "author"],
                 "properties": {
                   "title": {
                     "type": "string",
-                    "example": "Finish stage 4 successfully"
+                    "example": "Na Drini ćuprija"
                   },
-                  "done": {
+                  "author": {
+                    "type": "string",
+                    "example": "Ivo Andrić"
+                  },
+                  "year_published": {
+                    "type": "integer",
+                    "example": 1945
+                  },
+                  "available": {
                     "type": "boolean",
+                    "default": true,
                     "example": true
                   }
                 }
@@ -106,19 +67,25 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Zadatak uspešno ažuriran."
+          "201": {
+            "description": "Knjiga je uspešno sačuvana u bazi.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Nevalidni podaci (prazan naslov ili duplikat)."
-          },
-          "404": {
-            "description": "Zadatak sa tim ID-jem nije pronađen."
+            "description": "Loš zahtev (fale obavezna polja title ili author)."
           }
         }
-      },
-      "delete": {
-        "summary": "Briše zadatak iz liste na osnovu ID-ja",
+      }
+    },
+    "/books/{id}": {
+      "get": {
+        "summary": "Vraća specifičnu knjigu na osnovu ID-ja",
         "parameters": [
           {
             "name": "id",
@@ -127,15 +94,124 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Jedinstveni ID zadatka koji se briše"
+            "description": "Jedinstveni ID knjige iz baze"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Knjiga uspešno pronađena.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Knjiga sa traženim ID-jem ne postoji u bazi."
+          }
+        }
+      },
+      "put": {
+        "summary": "Ažurira podatke o postojećoj knjizi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Jedinstveni ID knjige koja se menja"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Proklata avlija"
+                  },
+                  "author": {
+                    "type": "string",
+                    "example": "Ivo Andrić"
+                  },
+                  "year_published": {
+                    "type": "integer",
+                    "example": 1954
+                  },
+                  "available": {
+                    "type": "boolean",
+                    "example": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Podaci o knjizi uspešno izmenjeni u bazi."
+          },
+          "404": {
+            "description": "Knjiga sa tim ID-jem nije pronađena."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Briše knjigu iz biblioteke na osnovu ID-ja",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Jedinstveni ID knjige koju brišemo"
           }
         ],
         "responses": {
           "204": {
-            "description": "Zadatak uspešno obrisan (nema sadržaja u odgovoru)."
+            "description": "Knjiga uspešno obrisana, nema sadržaja u odgovoru."
           },
           "404": {
-            "description": "Zadatak sa tim ID-jem nije pronađen."
+            "description": "Knjiga sa tim ID-jem ne postoji."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Book": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Automatski generisan ID od strane Postgresa (SERIAL)",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Na Drini ćuprija"
+          },
+          "author": {
+            "type": "string",
+            "example": "Ivo Andrić"
+          },
+          "year_published": {
+            "type": "integer",
+            "example": 1945
+          },
+          "available": {
+            "type": "boolean",
+            "example": true
           }
         }
       }
