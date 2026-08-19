@@ -47,6 +47,40 @@ async function initDatabase() {
             );
         `);
         console.log('Postgres tables initialized successfully!');
+
+        //SEEDING DATA
+        const result = await pool.query("SELECT * FROM book");
+        if(result.rows.length===0){
+            console.log('Database empty, seeding data...');
+
+            const b1_title = "Harry Potter and the Deathly Hallows";
+            const b1_author = "J.K. Rowling";
+            const b1_year = 2007;
+
+            const b2_title = "1984";
+            const b2_author = "George Orwell";
+            const b2_year = 1949;
+            const b2_available = false;
+
+            const b3_title = "The Hobbit";
+            const b3_author = "J.R.R. Tolkien";
+            const b3_year = 1937;
+
+            const result = await pool.query(`
+        INSERT INTO books (title, author, year_published) 
+        VALUES 
+            ($1, $2, $3),  
+            ($4, $5, $6, $7),  
+            ($8, $9, $10, $11)  
+        RETURNING *`, 
+        [
+            b1_title, b1_author, b1_year,
+            b2_title, b2_author, b2_year, b2_available,
+            b3_title, b3_author, b3_year,
+        ]
+    );
+    console.log(result.rows);
+        }
     } catch (err) {
         console.error('ERROR Initializing DB: ', err);
         throw err; 
@@ -187,6 +221,24 @@ app.delete("/books/:id", async (req,res)=>{
         res.status(500).json({ error: "Internal server error." });
     }
 });
+app.patch("/books/:id/toggle-availability", async(req,res)=>{
+    const reqId = req.params.id;
+    try{
+        const result = await pool.query(`
+            UPDATE books
+            SET available = NOT available
+            WHERE id = $1
+            RETURNING *`,[reqId]);
+        
+            if(result.rows.length===0){
+                return res.status(404).json({error: `Book with id: ${reqId} is not found!`});
+            }
+            res.status(200).json(result.rows[0]);
+    }catch (error) {
+        console.error('Error patching data: ', error.message);
+        res.status(500).json({ error: "Internal server error." });
+    }
+})
 
 //----------------
 //  DELAY & START
