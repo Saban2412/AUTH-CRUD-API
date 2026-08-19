@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Todo Task API",
+    "title": "Library API",
     "version": "1.0.0",
-    "description": "Kompletan CRUD API za upravljanje zadacima, dokumentovan i testiran kroz Swagger UI"
+    "description": "Complete CRUD for managing books"
   },
   "servers": [
     {
@@ -11,9 +11,9 @@
     }
   ],
   "paths": {
-    "/tasks": {
+    "/books": {
       "get": {
-        "summary": "Vraća sve zadatke iz liste",
+        "summary": "Returns all books",
         "responses": {
           "200": {
             "description": "Uspešno osvežen spisak zadataka."

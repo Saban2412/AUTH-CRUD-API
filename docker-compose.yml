@@ -13,6 +13,9 @@ services:
       DB_HOST: ${DB_HOST}   
       DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
+    volumes:
+      - .:/app
+      - /app/node_modules
     depends_on:
       - db               
 
@@ -20,7 +23,7 @@ services:
   db:
     image: postgres:16-alpine
     ports:
-      - "5432:5432"
+      - "5434:5432"
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
