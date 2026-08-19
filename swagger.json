@@ -1,0 +1,144 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Todo Task API",
+    "version": "1.0.0",
+    "description": "Kompletan CRUD API za upravljanje zadacima, dokumentovan i testiran kroz Swagger UI"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/tasks": {
+      "get": {
+        "summary": "Vraća sve zadatke iz liste",
+        "responses": {
+          "200": {
+            "description": "Uspešno osvežen spisak zadataka."
+          }
+        }
+      },
+      "post": {
+        "summary": "Kreira novi zadatak",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Buy milk"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Zadatak uspešno kreiran."
+          },
+          "400": {
+            "description": "Greška u validaciji (fali naslov ili već postoji)."
+          }
+        }
+      }
+    },
+    "/tasks/{id}": {
+      "get": {
+        "summary": "Vraća specifičan zadatak na osnovu ID-ja",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Jedinstveni ID zadatka"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Zadatak uspešno pronađen."
+          },
+          "404": {
+            "description": "Zadatak sa tim ID-jem nije pronađen."
+          }
+        }
+      },
+      "put": {
+        "summary": "Ažurira postojeći zadatak (naslov i/ili status završenosti)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Jedinstveni ID zadatka koji se menja"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Finish stage 4 successfully"
+                  },
+                  "done": {
+                    "type": "boolean",
+                    "example": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zadatak uspešno ažuriran."
+          },
+          "400": {
+            "description": "Nevalidni podaci (prazan naslov ili duplikat)."
+          },
+          "404": {
+            "description": "Zadatak sa tim ID-jem nije pronađen."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Briše zadatak iz liste na osnovu ID-ja",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Jedinstveni ID zadatka koji se briše"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Zadatak uspešno obrisan (nema sadržaja u odgovoru)."
+          },
+          "404": {
+            "description": "Zadatak sa tim ID-jem nije pronađen."
+          }
+        }
+      }
+    }
+  }
+}
