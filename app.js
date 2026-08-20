@@ -6,6 +6,7 @@ const path = require("path");
 
 //initializing and checking connection
 const supabase = require("./supabaseClient.js");
+const requireAuth = require("./authMiddleware.js");
 console.log(
   "Supabase client initializes:",
   process.env.SUPABASE_URL ? "URL fetched" : "⚠️ URL missing!",
@@ -350,29 +351,31 @@ app.get("/public/info", (req, res) => {
   res.status(200).json({ message: "Welcome stranger! This info is public" });
 });
 
-app.get("/protected/profile", async (req, res) => {
-  const authHeader = req.headers["authorization"];
+app.get("/protected/profile", requireAuth, (req, res) => {
+  res.status(200).json(req.user);
+});
+//----------------
+//  LOGOUT
+//----------------
+app.post("/auth/logout", requireAuth, async (req, res) => {
   try {
-    if (
-      !authHeader ||
-      !authHeader.startsWith("Bearer ") ||
-      authHeader.slice(7) === ""
-    ) {
-      return res.status(401).json({ error: "Access token required." });
-    }
-    const token = authHeader.slice(7);
-    const { data, error } = await supabase.auth.getUser(token);
+    const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error("Supabase token verification error: ", error.message);
-      return res.status(401).json({ error: "Invalid or expired token." });
+      console.error("Supabase sign out error: ", error.message);
+      return res.status(401).json({ error: "Something went wrong." });
     }
-    res.status(200).json(data.user);
+    res.status(204).send();
   } catch (error) {
-    console.error("Error while fetching: ", error.message);
+    console.error("Error durign login: ", error.message);
     res.status(500).json({ error: "Internal server error." });
   }
 });
 
+app.get("/protected/dashboard", requireAuth, (req, res) => {
+  res
+    .status(200)
+    .json({ message: `Welcome to your dashboard, ${req.user.email}!` });
+});
 //----------------
 //  DELAY & START
 //----------------
