@@ -350,7 +350,7 @@ app.get("/public/info", (req, res) => {
   res.status(200).json({ message: "Welcome stranger! This info is public" });
 });
 
-app.get("/protected/profile", (req, res) => {
+app.get("/protected/profile", async (req, res) => {
   const authHeader = req.headers["authorization"];
   try {
     if (
@@ -360,11 +360,15 @@ app.get("/protected/profile", (req, res) => {
     ) {
       return res.status(401).json({ error: "Access token required." });
     }
-    res
-      .status(200)
-      .json({ message: "Token was presented (not yet verified)." });
+    const token = authHeader.slice(7);
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error) {
+      console.error("Supabase token verification error: ", error.message);
+      return res.status(401).json({ error: "Invalid or expired token." });
+    }
+    res.status(200).json(data.user);
   } catch (error) {
-    console.error("Error durign fetching: ", error.message);
+    console.error("Error while fetching: ", error.message);
     res.status(500).json({ error: "Internal server error." });
   }
 });
