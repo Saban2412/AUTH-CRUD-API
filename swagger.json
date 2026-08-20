@@ -1,41 +1,90 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.3",
   "info": {
-    "title": "Library API",
+    "title": "Task API",
     "version": "1.0.0",
-    "description": "Kompletan CRUD API za upravljanje knjigama u biblioteci, povezan sa Postgres bazom podataka."
+    "description": "API za upravljanje knjigama i autentifikaciju preko Supabase-a"
   },
   "servers": [
     {
       "url": "http://localhost:3000",
-      "description": "Lokalni Docker server"
+      "description": "Lokalni razvojni server"
     }
   ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Unesi svoj pristupni token (bez riječi 'Bearer' ispred)"
+      }
+    },
+    "schemas": {
+      "Book": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "title": { "type": "string", "example": "1984" },
+          "author": { "type": "string", "example": "George Orwell" },
+          "year_published": { "type": "integer", "example": 1949 },
+          "available": { "type": "boolean", "example": false }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "dca738d2-9721-4d37-8851-93bf28328da3"
+          },
+          "email": { "type": "string", "example": "user@example.com" }
+        }
+      }
+    }
+  },
   "paths": {
-    "/books": {
+    "/": {
       "get": {
-        "summary": "Vraća sve knjige iz biblioteke",
+        "summary": "Health Check / Info",
         "responses": {
           "200": {
-            "description": "Uspešno osvežen spisak svih knjiga.",
+            "description": "Uspješno dobijeni bazični info o aplikaciji"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Provjera statusa aplikacije",
+        "responses": {
+          "200": {
+            "description": "Aplikacija radi stabilno"
+          }
+        }
+      }
+    },
+    "/books": {
+      "get": {
+        "summary": "Preuzmi sve knjige",
+        "responses": {
+          "200": {
+            "description": "Lista svih knjiga",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Book"
-                  }
+                  "items": { "$ref": "#/components/schemas/Book" }
                 }
               }
             }
           },
-          "500": {
-            "description": "Greška na serveru pri komunikaciji sa bazom."
-          }
+          "429": { "description": "Rate limit prekoračen - Hold on bot!" },
+          "500": { "description": "Interna greška servera" }
         }
       },
       "post": {
-        "summary": "Dodaje novu knjigu u biblioteku",
+        "summary": "Kreiraj novu knjigu",
         "requestBody": {
           "required": true,
           "content": {
@@ -44,22 +93,155 @@
                 "type": "object",
                 "required": ["title", "author"],
                 "properties": {
-                  "title": {
+                  "title": { "type": "string", "example": "The Hobbit" },
+                  "author": { "type": "string", "example": "J.R.R. Tolkien" },
+                  "year_published": { "type": "integer", "example": 1937 },
+                  "available": { "type": "boolean", "example": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Knjiga uspješno kreirana",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Book" }
+              }
+            }
+          },
+          "400": { "description": "Naslov i autor su obavezna polja" },
+          "500": { "description": "Interna greška servera" }
+        }
+      }
+    },
+    "/books/{id}": {
+      "get": {
+        "summary": "Preuzmi pojedinačnu knjigu po ID-ju",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Knjiga pronađena",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Book" }
+              }
+            }
+          },
+          "404": { "description": "Knjiga sa tim ID-jem nije pronađena" },
+          "500": { "description": "Interna greška servera" }
+        }
+      },
+      "put": {
+        "summary": "Ažuriraj knjigu po ID-ju",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "author": { "type": "string" },
+                  "year_published": { "type": "integer" },
+                  "available": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Knjiga uspješno ažurirana",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Book" }
+              }
+            }
+          },
+          "400": {
+            "description": "Naslov ili autor ne mogu biti prazni stringovi"
+          },
+          "404": { "description": "Knjiga nije pronađena" },
+          "500": { "description": "Interna greška servera" }
+        }
+      },
+      "delete": {
+        "summary": "Obriši knjigu po ID-ju",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": { "description": "Uspješno obrisano, nema sadržaja" },
+          "404": { "description": "Knjiga sa tim ID-jem ne postoji" },
+          "500": { "description": "Interna greška servera" }
+        }
+      }
+    },
+    "/books/{id}/toggle-availability": {
+      "patch": {
+        "summary": "Promijeni status dostupnosti knjige (True/False)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status uspješno prebačen",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Book" }
+              }
+            }
+          },
+          "404": { "description": "Knjiga nije pronađena" },
+          "500": { "description": "Interna greška servera" }
+        }
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "summary": "Registracija novog korisnika preko Supabase",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "user@example.com" },
+                  "password": {
                     "type": "string",
-                    "example": "Na Drini ćuprija"
-                  },
-                  "author": {
-                    "type": "string",
-                    "example": "Ivo Andrić"
-                  },
-                  "year_published": {
-                    "type": "integer",
-                    "example": 1945
-                  },
-                  "available": {
-                    "type": "boolean",
-                    "default": true,
-                    "example": true
+                    "example": "securepassword123"
                   }
                 }
               }
@@ -68,257 +250,113 @@
         },
         "responses": {
           "201": {
-            "description": "Knjiga je uspešno sačuvana u bazi.",
+            "description": "Korisnik uspješno kreiran",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "400": { "description": "Greška u zahtjevu ili podaci već postoje" },
+          "500": { "description": "Interna greška servera" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Prijava korisnika (Vraća JWT Token)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "user@example.com" },
+                  "password": {
+                    "type": "string",
+                    "example": "securepassword123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Uspješna prijava, vraćen token",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Book"
+                  "type": "object",
+                  "properties": {
+                    "user": { "$ref": "#/components/schemas/User" },
+                    "access_token": {
+                      "type": "string",
+                      "example": "eyJhbGciOi..."
+                    },
+                    "refresh_token": {
+                      "type": "string",
+                      "example": "eyJhbGciOi..."
+                    }
+                  }
                 }
               }
             }
           },
-          "400": {
-            "description": "Loš zahtev (fale obavezna polja title ili author)."
-          }
+          "401": { "description": "Pogrešan email ili lozinka" },
+          "500": { "description": "Interna greška servera" }
         }
       }
     },
-    "/books/{id}": {
+    "/auth/logout": {
+      "post": {
+        "summary": "Odjava korisnika i uništavanje sesije",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "204": { "description": "Uspješno odjavljen" },
+          "401": { "description": "Neautorizovan ili nevalidan token" },
+          "500": { "description": "Interna greška servera" }
+        }
+      }
+    },
+    "/public/info": {
       "get": {
-        "summary": "Vraća specifičnu knjigu na osnovu ID-ja",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Jedinstveni ID knjige iz baze"
-          }
-        ],
+        "summary": "Javne informacije dostupne svima",
         "responses": {
           "200": {
-            "description": "Knjiga uspešno pronađena.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Book"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Knjiga sa traženim ID-jem ne postoji u bazi."
-          }
-        }
-      },
-      "put": {
-        "summary": "Ažurira podatke o postojećoj knjizi (Potpuna izmjena)",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Jedinstveni ID knjige koja se menja"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "example": "Prokleta avlija"
-                  },
-                  "author": {
-                    "type": "string",
-                    "example": "Ivo Andrić"
-                  },
-                  "year_published": {
-                    "type": "integer",
-                    "example": 1954
-                  },
-                  "available": {
-                    "type": "boolean",
-                    "example": false
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Podaci o knjizi uspešno izmenjeni u bazi.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Book"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Knjiga sa tim ID-jem nije pronađena."
-          }
-        }
-      },
-      "patch": {
-        "summary": "Djelomična izmjena knjige",
-        "description": "Omogućuje izmjenu jednog ili više polja knjige. Sva polja koja se izostave u request body-ju ostaju netaknuta u bazi podataka.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Jedinstveni ID knjige koju krpamo (ažuriramo)"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "example": "Harry Potter and the Deathly Hallows"
-                  },
-                  "author": {
-                    "type": "string",
-                    "example": "J.K. Rowling"
-                  },
-                  "year_published": {
-                    "type": "integer",
-                    "example": 2007
-                  },
-                  "available": {
-                    "type": "boolean",
-                    "example": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Knjiga je uspješno izmijenjena.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Book"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Loš zahtjev (poslan je prazan string za polje title ili author)."
-          },
-          "404": {
-            "description": "Knjiga s tim ID-jem nije pronađena."
-          },
-          "500": {
-            "description": "Internal server error."
-          }
-        }
-      },
-      "delete": {
-        "summary": "Briše knjigu iz biblioteke na osnovu ID-ja",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Jedinstveni ID knjige koju brišemo"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Knjiga uspešno obrisana, nema sadržaja u odgovoru."
-          },
-          "404": {
-            "description": "Knjiga sa tim ID-jem ne postoji."
+            "description": "Poruka dobrodošlice klijentu"
           }
         }
       }
     },
-    "/books/{id}/toggle-availability": {
-      "patch": {
-        "summary": "Preokreni dostupnost knjige",
-        "description": "Automatski postavlja polje 'available' na suprotnu vrijednost (iz true u false i obrnuto) direktno u bazi podataka. Ne zahtijeva slanje request body-ja.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Jedinstveni ID knjige kojoj se mijenja status dostupnosti"
-          }
-        ],
+    "/protected/profile": {
+      "get": {
+        "summary": "Profil trenutno prijavljenog korisnika",
+        "security": [{ "BearerAuth": [] }],
         "responses": {
           "200": {
-            "description": "Status dostupnosti je uspješno promijenjen.",
+            "description": "Vraća objekat korisnika",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Book"
-                }
+                "schema": { "$ref": "#/components/schemas/User" }
               }
             }
           },
-          "404": {
-            "description": "Knjiga s tim ID-jem nije pronađena."
-          },
-          "500": {
-            "description": "Internal server error."
-          }
+          "401": { "description": "Token nedostaje ili je nevalidan" }
         }
       }
-    }
-  },
-  "components": {
-    "schemas": {
-      "Book": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "description": "Automatski generisan ID od strane Postgresa (SERIAL)",
-            "example": 1
+    },
+    "/protected/dashboard": {
+      "get": {
+        "summary": "Zaštićeni dashboard panel",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Poruka dobrodošlice sa emailom korisnika"
           },
-          "title": {
-            "type": "string",
-            "example": "Na Drini ćuprija"
-          },
-          "author": {
-            "type": "string",
-            "example": "Ivo Andrić"
-          },
-          "year_published": {
-            "type": "integer",
-            "example": 1945
-          },
-          "available": {
-            "type": "boolean",
-            "example": true
-          }
+          "401": { "description": "Token nedostaje ili je nevalidan" }
         }
       }
     }
