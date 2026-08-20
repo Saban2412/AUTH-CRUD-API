@@ -1,4 +1,4 @@
-# Task API - Book Management & Authentication System
+# Book Library API - Book Management & Authentication System
 
 A secure Node.js/Express API for managing a book library, integrated with PostgreSQL and Supabase Auth. This project features user authentication (Sign Up, Log In, Log Out), JWT token verification via custom middleware, a database rate-limiter, and complete OpenAPI documentation via Swagger UI.
 
@@ -118,4 +118,4 @@ URL: **http://localhost:3000/api-docs**
 
 1. **No Password Hashing Roll-Your-Own:** Industry standard encryption and cryptographic hashing are completely outsourced to Supabase Auth.
 2. **Stateless JWT Checks:** The authentication guard reads, trims, and validates incoming JSON Web Tokens dynamically via network calls to the Identity Provider without local state manipulation.
-3. **Environment Security:** Plaintext configuration tokens and access codes are strictly omitted from git trees using strict .gitignore patterns
+3. **Environment Security:** Plaintext configuration tokens and access codes are strictly omitted from git trees using strict .gitignore patterns.
