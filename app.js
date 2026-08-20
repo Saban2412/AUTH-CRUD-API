@@ -344,6 +344,32 @@ app.post("/auth/login", async (req, res) => {
 });
 
 //----------------
+//  MIDDLEWARE
+//----------------
+app.get("/public/info", (req, res) => {
+  res.status(200).json({ message: "Welcome stranger! This info is public" });
+});
+
+app.get("/protected/profile", (req, res) => {
+  const authHeader = req.headers["authorization"];
+  try {
+    if (
+      !authHeader ||
+      !authHeader.startsWith("Bearer ") ||
+      authHeader.slice(7) === ""
+    ) {
+      return res.status(401).json({ error: "Access token required." });
+    }
+    res
+      .status(200)
+      .json({ message: "Token was presented (not yet verified)." });
+  } catch (error) {
+    console.error("Error durign fetching: ", error.message);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//----------------
 //  DELAY & START
 //----------------
 console.log("Čekam 5 sekundi da se Postgres podigne...");
