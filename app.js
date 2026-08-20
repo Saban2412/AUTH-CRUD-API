@@ -289,6 +289,61 @@ app.patch("/books/:id/toggle-availability", async (req, res) => {
 });
 
 //----------------
+//    SIGN UP
+//----------------
+app.post("/auth/signup", async (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email || email.trim() === "" || !password || password.trim() === "") {
+    return res.status(400).json({ error: "Email and password are required!" });
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(201).json(data.user);
+  } catch (error) {
+    console.error("Error durign signup: ", error.message);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+//----------------
+//    LOGIN
+//----------------
+app.post("/auth/login", async (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email || email.trim() === "" || !password || password.trim() === "") {
+    return res.status(400).json({ error: "Email and password are required!" });
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+    if (error) {
+      return res.status(401).json({ error: error.message });
+    }
+    res.status(200).json({
+      user: data.user,
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    });
+  } catch (error) {
+    console.error("Error durign login: ", error.message);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//----------------
 //  DELAY & START
 //----------------
 console.log("Čekam 5 sekundi da se Postgres podigne...");
