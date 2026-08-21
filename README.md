@@ -33,13 +33,13 @@ Secrets and configurations are strictly isolated inside a git-ignored `.env` fil
 
 ```text
 PORT=3000
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_HOST=db
+DB_PORT=5432
+DB_NAME=your_db_name
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_KEY=your_supabase_anon_public_key
-POSTGRES_USER=your_db_user
-POSTGRES_PASSWORD=your_db_password
-POSTGRES_DB=your_db_name
-POSTGRES_HOST=db
-POSTGRES_PORT=5432
 ```
 
 ---
@@ -83,7 +83,7 @@ docker compose down
 | GET    | /public/info                   | Open public information endpoint             | NONE           | 200                |
 | GET    | /protected/profile             | Fetch current user safe metadata             | Bearer Token   | 200, 401           |
 | GET    | /protected/dashboard           | Secure user dashboard panel                  | Bearer Token   | 200, 401           |
-| GET    | /books                         | Retrieve a list of all books                 | NONE           | 200, 249, 500      |
+| GET    | /books                         | Retrieve a list of all books                 | NONE           | 200, 429, 500      |
 | GET    | /books/:id                     | Fetch details of a single book by ID         | NONE           | 200, 404, 500      |
 | POST   | /books                         | Add a new book to the library                | NONE           | 201, 400, 500      |
 | PUT    | /books/:id                     | Update all fields of a specific book         | NONE           | 200, 400, 404, 500 |
@@ -100,13 +100,13 @@ URL: **http://localhost:3000/api-docs**
 
 ### How to test protected routes inside Swagger:
 
-1. Hit the POST /auth/login endpoint with valid credentials to obtain your access_token[cite: 1].
+1. Hit the POST /auth/login endpoint with valid credentials to obtain your access_token.
 
-2. Click the green Authorize button at the top of the Swagger page[cite: 1].
+2. Click the green Authorize button at the top of the Swagger page.
 
-3. Paste the JWT string inside the text input and save (Swagger automatically formats the Bearer prefix)[cite: 1].
+3. Paste the JWT string inside the text input and save (Swagger automatically formats the Bearer prefix).
 
-4. Locked endpoints with a padlock icon will now execute successfully using your dynamic session token[cite: 1]!
+4. Locked endpoints with a padlock icon will now execute successfully using your dynamic session token!
 
 ### Swagger UI Screenshot
 
